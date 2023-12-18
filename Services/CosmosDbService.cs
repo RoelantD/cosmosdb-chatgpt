@@ -1,4 +1,6 @@
-﻿using Cosmos.Chat.GPT.Models;
+﻿//using Microsoft.Azure.Cosmos;
+//using Microsoft.Azure.Cosmos.Fluent;
+using Cosmos.Chat.GPT.Models;
 
 namespace Cosmos.Chat.GPT.Services;
 
