@@ -1,0 +1,209 @@
+{
+	// Place your cosmosdb-chatgpt workspace snippets here. Each snippet is defined under a snippet name and has a scope, prefix, body and 
+	// description. Add comma separated ids of the languages where the snippet is applicable in the scope field. If scope 
+	// is left empty or omitted, the snippet gets applied to all languages. The prefix is what is 
+	// used to trigger the snippet and the body will be expanded and inserted. Possible variables are: 
+	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders. 
+	// Placeholders with the same ids are connected.
+	// Example:
+	// "Print to console": {
+	// 	"scope": "javascript,typescript",
+	// 	"prefix": "log",
+	// 	"body": [
+	// 		"console.log('$1');",
+	// 		"$2"
+	// 	],
+	// 	"description": "Log output to console"
+	// }
+
+	"Appconfig": {
+		"scope": "json",
+		"prefix": "igappsettings",
+		"body": [
+			"{",
+			"	\"DetailedErrors\": true,",
+			"	\"Logging\": {",
+			"		\"LogLevel\": {",
+			"		\"Default\": \"Information\",",
+			"		\"Microsoft.AspNetCore\": \"Warning\"",
+			"		}",
+			"	},",
+			"	\"AllowedHosts\": \"*\",",
+			"	\"CosmosDb\": {",
+			"		\"Endpoint\": \"https://mrsbgnm6yliiu-cosmos-nosql.documents.azure.com:443/\",",
+			"		\"Key\": \"QGNb6YSVAhkNCDECjaO6vvne3dMl0TlM2qyxBY5Gj3S2hCiewQOplHTpG9y2HVxHDO2wOvEgG8dbACDbH4Mpjg==\",",
+			"		\"Database\": \"chatdatabase\",",
+			"		\"Container\": \"chatcontainer\"",
+			"	},",
+			"	\"OpenAi\": {",
+			"		\"Endpoint\": \"https://oa-ignite-nl.openai.azure.com/\",",
+			"		\"Key\": \"f146d304377641e1aacbd92ceb49d90e\",",
+			"		\"ModelName\": \"oa-ignite-model\",",
+			"		\"MaxConversationTokens\": \"2000\"",
+			"	}",
+			"}"
+		],
+		"description": "Application settings json"
+	},
+
+	"CosmosDbConstructor": {
+		"scope": "csharp",
+		"prefix": "igcdbctor",
+		"body": [
+			"public CosmosDbService(string endpoint, string key, string databaseName, string containerName)",
+			"{",
+			"	ArgumentNullException.ThrowIfNullOrEmpty(databaseName);",
+			"	ArgumentNullException.ThrowIfNullOrEmpty(containerName);",
+			"	ArgumentNullException.ThrowIfNullOrEmpty(endpoint);",
+			"	ArgumentNullException.ThrowIfNullOrEmpty(key);",
+			"",
+			"	CosmosSerializationOptions options = new()",
+			"	{",
+			"		PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase",
+			"	};",
+			"",
+			"	CosmosClient client = new CosmosClientBuilder(endpoint, key)",
+			"		.WithSerializerOptions(options)",
+			"		.Build();",
+			"",
+			"	Database? database = client?.GetDatabase(databaseName);",
+			"	Container? container = database?.GetContainer(containerName);",
+			"",
+			"	_container = container ??",
+			"		throw new ArgumentException(\"Unable to connect to existing Azure Cosmos DB container or database.\");",
+			"}",
+		],
+		"description": "Cosmos DB service constructor"
+	},
+
+	"CosmosDbInsert": {
+		"scope": "csharp",
+		"prefix": "igcdbinsert",
+		"body": [
+			"public async Task<Session> InsertSessionAsync(Session session)",
+			"{",
+			"	PartitionKey partitionKey = new(session.SessionId);",
+			"	return await _container.CreateItemAsync<Session>(",
+			"		item: session,",
+			"		partitionKey: partitionKey",
+			"	);",
+			"}",
+			"",
+			"public async Task<Message> InsertMessageAsync(Message message)",
+			"{",
+			"	PartitionKey partitionKey = new(message.SessionId);",
+			"	Message newMessage = message with { TimeStamp = DateTime.UtcNow };",
+			"	return await _container.CreateItemAsync<Message>(",
+			"		item: message,",
+			"		partitionKey: partitionKey",
+			"	);",
+			"}"
+		],
+		"description": "Cosmos DB insert logic"
+	},
+
+	"CosmosDbGet": {
+		"scope": "csharp",
+		"prefix": "igcdbget",
+		"body": [
+			"	public async Task<List<Session>> GetSessionsAsync()",
+			"	{",
+			"		QueryDefinition query = new QueryDefinition(\"SELECT DISTINCT * FROM c WHERE c.type = @type\")",
+			"			.WithParameter(\"@type\", nameof(Session));",
+			"	",
+			"		FeedIterator<Session> response = _container.GetItemQueryIterator<Session>(query);",
+			"	",
+			"		List<Session> output = new();",
+			"		while (response.HasMoreResults)",
+			"		{",
+			"			FeedResponse<Session> results = await response.ReadNextAsync();",
+			"			output.AddRange(results);",
+			"		}",
+			"		return output;",
+			"	}",
+			"",
+			"	public async Task<List<Message>> GetSessionMessagesAsync(string sessionId)",
+			"	{",
+			"		QueryDefinition query = new QueryDefinition(\"SELECT * FROM c WHERE c.sessionId = @sessionId AND c.type = @type\")",
+			"			.WithParameter(\"@sessionId\", sessionId)",
+			"			.WithParameter(\"@type\", nameof(Message));",
+			"	",
+			"		FeedIterator<Message> results = _container.GetItemQueryIterator<Message>(query);",
+			"	",
+			"		List<Message> output = new();",
+			"		while (results.HasMoreResults)",
+			"		{",
+			"			FeedResponse<Message> response = await results.ReadNextAsync();",
+			"			output.AddRange(response);",
+			"		}",
+			"		return output;",
+			"	}"
+		],
+		"description": "Cosmos DB get logic"
+	},
+
+	"CosmosDbUpdate": {
+		"scope": "csharp",
+		"prefix": "igcdbupdate",
+		"body": [
+			"	public async Task<Session> UpdateSessionAsync(Session session)",
+			"	{",
+			"		PartitionKey partitionKey = new(session.SessionId);",
+			"		return await _container.ReplaceItemAsync(",
+			"			item: session,",
+			"			id: session.Id,",
+			"			partitionKey: partitionKey",
+			"		);",
+			"	}",
+		"	",
+			"	public async Task UpsertSessionBatchAsync(params dynamic[] messages)",
+			"	{",
+			"		if (messages.Select(m => m.SessionId).Distinct().Count() > 1)",
+			"		{",
+			"			throw new ArgumentException(\"All items must have the same partition key.\");",
+			"		}",
+		"	",
+			"		PartitionKey partitionKey = new(messages.First().SessionId);",
+			"		TransactionalBatch batch = _container.CreateTransactionalBatch(partitionKey);",
+			"		foreach (var message in messages)",
+			"		{",
+			"			batch.UpsertItem(",
+			"				item: message",
+			"			);",
+			"		}",
+			"		await batch.ExecuteAsync();",
+			"	}"
+		],
+		"description": "Cosmos DB update logic"
+	},
+
+	"CosmosDbDelete": {
+		"scope": "csharp",
+		"prefix": "igcdbdelete",
+		"body": [
+			"	public async Task DeleteSessionAndMessagesAsync(string sessionId)",
+			"	{",
+			"		PartitionKey partitionKey = new(sessionId);",
+			"	",
+			"		QueryDefinition query = new QueryDefinition(\"SELECT VALUE c.id FROM c WHERE c.sessionId = @sessionId\")",
+			"				.WithParameter(\"@sessionId\", sessionId);",
+			"	",
+			"		FeedIterator<string> response = _container.GetItemQueryIterator<string>(query);",
+			"	",
+			"		TransactionalBatch batch = _container.CreateTransactionalBatch(partitionKey);",
+			"		while (response.HasMoreResults)",
+			"		{",
+			"			FeedResponse<string> results = await response.ReadNextAsync();",
+			"			foreach (var itemId in results)",
+			"			{",
+			"				batch.DeleteItem(",
+			"					id: itemId",
+			"				);",
+			"			}",
+			"		}",
+			"		await batch.ExecuteAsync();"
+			"	}",
+		],
+		"description": "Cosmos DB delete logic"
+	}
+}
