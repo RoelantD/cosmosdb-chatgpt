@@ -6,6 +6,8 @@ namespace Cosmos.Chat.GPT.Services;
 
 public class CosmosDbService
 {
+    private readonly Container _container;
+
     public CosmosDbService(string endpoint, string key, string databaseName, string containerName)
     {
         ArgumentNullException.ThrowIfNullOrEmpty(databaseName);
