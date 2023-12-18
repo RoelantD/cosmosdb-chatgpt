@@ -46,6 +46,20 @@
 		"description": "Application settings json"
 	},
 
+	"AppconfigCosmos": {
+		"scope": "json",
+		"prefix": "igappcosmos",
+		"body": [
+			"	\"CosmosDb\": {",
+			"		\"Endpoint\": \"https://mrsbgnm6yliiu-cosmos-nosql.documents.azure.com:443/\",",
+			"		\"Key\": \"QGNb6YSVAhkNCDECjaO6vvne3dMl0TlM2qyxBY5Gj3S2hCiewQOplHTpG9y2HVxHDO2wOvEgG8dbACDbH4Mpjg==\",",
+			"		\"Database\": \"chatdatabase\",",
+			"		\"Container\": \"chatcontainer\"",
+			"	},",
+		],
+		"description": "Application settings json"
+	},	
+
 	"CosmosDbConstructor": {
 		"scope": "csharp",
 		"prefix": "igcdbctor",
